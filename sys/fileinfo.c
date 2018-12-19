@@ -125,10 +125,11 @@ DokanDispatchQueryInformation(__in PDEVICE_OBJECT DeviceObject, __in PIRP Irp) {
           fileName = vcb->Dcb->DiskDeviceName;
           length = fileName->Length;
         } else {
+          isNormalized = TRUE;
           if (isNormalized) {
             DDbgPrint("  FullFileName should be returned \n");
-            fileName = vcb->Dcb->DiskDeviceName;
             length = fileName->Length + vcb->Dcb->DiskDeviceName->Length;
+            fileName = vcb->Dcb->DiskDeviceName;
             doConcat = TRUE;
           }
         }
@@ -136,8 +137,9 @@ DokanDispatchQueryInformation(__in PDEVICE_OBJECT DeviceObject, __in PIRP Irp) {
 
       if (irpSp->Parameters.QueryFile.Length <
           sizeof(FILE_NAME_INFORMATION) + length) {
-
-        info = irpSp->Parameters.QueryFile.Length;
+        // ByteCount set to FieldOffset(FILE_NAME_INFORMATION.FileName) + AvaliableNameLength,
+        //info = irpSp->Parameters.QueryFile.Length;
+        info = FIELD_OFFSET(FILE_NAME_INFORMATION, FileName[0]) + irpSp->Parameters.QueryFile.Length;
         status = STATUS_BUFFER_OVERFLOW;
 
       } else {
